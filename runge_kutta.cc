@@ -5,26 +5,30 @@
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/distributed/tria.h>
 #include <deal.II/distributed/grid_refinement.h>
+#include <deal.II/base/discrete_time.h>
 
 // STL
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <map>
 
 #include <deal.II/base/logstream.h>
+
+#include <deal.II/base/time_stepping.h>
 
 #include "advection_field.hpp"
 
 using namespace dealii;
 
 
+
 template <int dim> class CharacteristicEquation : public TensorFunction<1, dim> {
 public:
   CharacteristicEquation() : TensorFunction<1, dim>() {}
 
-  virtual Tensor<1, dim> value(const Point<dim> &point) const override;
-  virtual void value_list(const std::vector<Point<dim>> &points,
-                          std::vector<Tensor<1, dim>> &values) const override;
+  virtual Tensor<1, dim> value(const Point<dim> &point, double time, double time_step) const;
+
 
 private:
   const double pi = numbers::PI;
@@ -33,58 +37,31 @@ private:
 };
 
 template <int dim>
-Tensor<1, dim> CharacteristicEquation<dim>::value(const Point<dim> &p) const
+Tensor<1, dim> CharacteristicEquation<dim>::value(const Point<dim> &p, double time, double time_step) const
 {
-  const double t = this->get_time();
+  //const double t = this->get_time();
 
   Tensor<1, dim> value;
   value.clear();
 
-  double t0 = 0;
-
-    const double tn = 1;
-
-    const double n=10;
-
-    const double dt = (tn-t0)/n;
-
-
-
-  // Here velocity is consider to be constant let it be 1 m/s.
-
-    const double T = 4;
-
     for (unsigned int d = 0; d < dim; ++d)
 
      {
+    	//Mesh points are transformed as x=xi+velocity*tau
+
     	auto c=advection_field.value(p);
 
-       value[d] =p[d]+c[d]*dt;
+       value[d] =p[d]+c[d]*time_step;
 
       // value[d] =1; //0.8 * std::sin( numbers::PI * p[1]);
 
      }
       return value;
 
-
-
-
-  return value;
 }
 
 
-template <int dim>
-void CharacteristicEquation<dim>::value_list(
-    const std::vector<Point<dim>> &points,
-    std::vector<Tensor<1, dim>> &values) const {
-  Assert(points.size() == values.size(),
-         ExcDimensionMismatch(points.size(), values.size()));
 
-  for (unsigned int p = 0; p < points.size(); ++p) {
-    values[p].clear();
-    values[p] = value(points[p]);
-  }
-}
 
 ///////////////////////////////////////////////////////////////
 
@@ -98,23 +75,24 @@ public:
 private:
   CharacteristicEquation<dim> charac_field;
   double T_max;
+
 };
 
 
-template <int dim> Tensor<1, dim> RK4<dim>::value(const Point<dim> &p,double time, double time_step) const {
+template <int dim> Tensor<1, dim> RK4<dim>::value(const Point<dim> &p,double time, double time_step) const
+{
 
   Tensor<1, dim> yn;
 
-double T_max=1.0;
 
   /* Here the equation is dy/dt =c; where c is velocity y is the vertex of mesh and t is the time
    *
    */
 
-    auto k1 = time_step * charac_field.value(p),
-         k2 = time_step * (charac_field.value(p) + k1 / 2),
-         k3 = time_step * (charac_field.value(p) + k2 / 2),
-         k4 = time_step * (charac_field.value(p) + k3);
+    auto k1 = time_step * charac_field.value(p,time,time_step),
+         k2 = time_step * (charac_field.value(p,time,time_step) + k1 / 2),
+         k3 = time_step * (charac_field.value(p,time,time_step) + k2 / 2),
+         k4 = time_step * (charac_field.value(p,time,time_step) + k3);
     return yn = (1 / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4);
 
 }
@@ -125,6 +103,11 @@ public:
   MeshDeformer();
 
   void run();
+
+  double diffOfy(const double time,  const Vector<double> time_new) {
+                  	   return time; //function x^2 + y^2
+                  	}
+
 
 private:
   void make_grid();
@@ -163,8 +146,10 @@ template <int dim> void MeshDeformer<dim>::make_grid()
                             false);
   triangulation.refine_global(1);
 
+  Vector<double> solution;
   std::vector<Tensor<1, dim>> vetices_on_cell;
-
+  TimeStepping::ExplicitRungeKutta<Vector<double>> explicit_runge_kutta(
+		  TimeStepping::RK_CLASSIC_FOURTH_ORDER);
   while (T_max >= time) {
 
       for (const auto &cell : triangulation.active_cell_iterators()) {
@@ -183,22 +168,15 @@ template <int dim> void MeshDeformer<dim>::make_grid()
                    break;
 
                 case 'B' :
-                	  v+=charac_field.value(v)*time_step;//foward Euler
+                	  v+=charac_field.value(v,time,time_step)*time_step;//foward Euler
                    break;
                 default :
                    printf("Invalid method\n" );
              }
-         //
 
-//          auto  k1 = time_step * charac_field.value(v),
-//           											 		k2 = time_step * ( charac_field.value(v)+ k1 / 2),
-//           											 		k3 = time_step * (charac_field.value(v) + k2 / 2),
-//           													k4 = time_step * (charac_field.value(v) + k3);
-//           											 	v+=(1/6.0)*(k1+2*k2+2*k3+k4 ) ;
-          //
           std::cout << v << "  t  "<<time <<"  dt "<< T_max<<std::endl;
-//          std::cout << v0 << std::endl;
-          std::cout << charac_field.value(v) << std::endl;
+          std::cout << v0 << std::endl;
+          std::cout << charac_field.value(v,time,time_step) << std::endl;
           std::cout << "----------------------------------" << std::endl;
 
           GridOut grid_out;
@@ -214,10 +192,7 @@ template <int dim> void MeshDeformer<dim>::make_grid()
 
       }
       time =time+time_step;
-//      std::ofstream out("grid-2.svg");
-//      		  			    				  GridOut       grid_out;
-//      		  			    				  grid_out.write_svg(triangulation, out);
-//      		  			    				  std::cout << "Grid written to grid-2.svg" << std::endl;
+
     }
 
 
