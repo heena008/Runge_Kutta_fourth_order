@@ -1,0 +1,36 @@
+<svg width="1235" height="1000" xmlns="http://www.w3.org/2000/svg" version="1.1">
+
+
+<!-- internal style sheet -->
+<style type="text/css"><![CDATA[
+ rect.background{fill:white}
+ rect{fill:none; stroke:rgb(25,25,25); stroke-width:2}
+ text{font-family:Helvetica; text-anchor:middle; fill:rgb(25,25,25)}
+ line{stroke:rgb(25,25,25); stroke-width:4}
+ path{fill:none; stroke:rgb(25,25,25); stroke-width:2}
+ circle{fill:white; stroke:black; stroke-width:2}
+
+ path.p0{fill:rgb(0,102,255); stroke:rgb(25,25,25); stroke-width:2}
+ path.ps0{fill:rgb(0,77,191); stroke:rgb(20,20,20); stroke-width:2}
+ rect.r0{fill:rgb(0,102,255); stroke:rgb(25,25,25); stroke-width:2}
+ path.p1{fill:rgb(255,0,0); stroke:rgb(25,25,25); stroke-width:2}
+ path.ps1{fill:rgb(191,0,0); stroke:rgb(20,20,20); stroke-width:2}
+ rect.r1{fill:rgb(255,0,0); stroke:rgb(25,25,25); stroke-width:2}
+]]></style>
+
+ <rect class="background" width="1235" height="1000"/>
+  <!-- cells -->
+  <path class="p1" d="M 198 920 L 766 821 L 766 352 L 198 451 L 198 920"/>
+  <line x1="198" y1="920" x2="198" y2="451"/>
+  <line x1="198" y1="920" x2="766" y2="821"/>
+  <path class="p1" d="M 766 821 L 1136 920 L 1136 451 L 766 352 L 766 821"/>
+  <line x1="1136" y1="920" x2="1136" y2="451"/>
+  <line x1="766" y1="821" x2="1136" y2="920"/>
+  <path class="p1" d="M 198 451 L 766 352 L 568 80 L 99 80 L 198 451"/>
+  <line x1="198" y1="451" x2="99" y2="80"/>
+  <line x1="99" y1="80" x2="568" y2="80"/>
+  <path class="p1" d="M 766 352 L 1136 451 L 1037 80 L 568 80 L 766 352"/>
+  <line x1="1136" y1="451" x2="1037" y2="80"/>
+  <line x1="568" y1="80" x2="1037" y2="80"/>
+
+</svg>
